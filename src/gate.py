@@ -32,7 +32,7 @@ def writeLog(student_num, student_name):
                     else:
                         status = 'leave'
 
-            with logpath.open(mode='a') as outfile: # mode='a': append
+            with logpath.open(mode='a',newline='') as outfile: # mode='a': append
                 writer = csv.writer(outfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 dt = datetime.now()
                 writer.writerow([dt.date(), dt.time().isoformat('seconds'), student_num, student_name, status])
@@ -41,7 +41,7 @@ def writeLog(student_num, student_name):
             if not student_name == 'Unknown':
                 status = 'enter'
 
-            with logpath.open(mode='w') as outfile: # mode='w': write (create & write)
+            with logpath.open(mode='w',newline='') as outfile: # mode='w': write (create & write)
                 writer = csv.writer(outfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                 dt = datetime.now()
                 writer.writerow([dt.date(), dt.time().isoformat('seconds'), student_num, student_name, status])
