@@ -4,7 +4,7 @@ import csv,nfc,sys
 from pathlib import Path
 from datetime import datetime
 
-LOG_FILE = '../log/' + str(datetime.now().date())
+LOG_FILE = '../log/' + datetime.now().strftime('%Y-%m')
 MEMBERLIST_FILE = '../memberlist/memberlist_utf8.csv'
 
 # PaSoRi RC-S380
