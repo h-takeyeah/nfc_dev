@@ -1,0 +1,26 @@
+{
+	"sql_connector_parameters": {
+		"parameter1": {
+			"host": "localhost",
+			"port": 3306,
+			"user": "hogeuser",
+			"password": "1111",
+			"database": "itsgate",
+			"allow_local_infile": "True"
+		},
+		"parameter2": {
+			"host": "localhost",
+			"port": 3306,
+			"user": "root",
+			"password": "0000",
+			"database": "itsgate"
+		},
+		"parameter3": {
+			"host": "localhost",
+			"port": 3306,
+			"user": "hogeuser",
+			"password": "1111",
+			"database": "employees"
+		}
+	}
+}
