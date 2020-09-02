@@ -16,7 +16,6 @@ class manager:
         which_action : 入室タッチか退室タッチか判定する
 
     """
-
     PASORI_S380_PATH = 'usb:054c:06c3' 
     
     def __init__(self):
