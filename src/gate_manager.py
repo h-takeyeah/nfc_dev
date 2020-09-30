@@ -2,6 +2,7 @@ import json
 import nfc
 import mysql.connector as mc
 from auto_close_cursor import AutoCloseCursor as atclscur
+from sound_util import SoundUtil as su
 
 class manager:
     """入退室管理の処理を行う本体
@@ -120,6 +121,7 @@ class manager:
             try:
                 cur.execute(query)
                 self.cnx.commit()
+                su.play_sound(estimated_action)
                 return True
 
             except mc.Error as e:
