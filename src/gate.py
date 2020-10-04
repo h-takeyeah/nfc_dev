@@ -7,7 +7,7 @@ CONFIG_FILE = 'config.json'
 
 print('[msg]\033[01;32mGood morning!\033[0m\nPlease wait.') # green
 with open(CONFIG_FILE) as f:
-    config = json.load(f).get('sql_connector_parameters').get('parameter1') # <class 'dict'>
+    config = json.load(f).get('sql_connector_parameters').get('default') # <class 'dict'>
 
 m = gate_manager.manager()
 

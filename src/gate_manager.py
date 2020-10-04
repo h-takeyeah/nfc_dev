@@ -1,8 +1,10 @@
 import json
 import nfc
 import mysql.connector as mc
+from collections import namedtuple
 from auto_close_cursor import AutoCloseCursor as atclscur
 import sound_util
+import dispatch_util
 
 class manager:
     """入退室管理の処理を行う本体
@@ -46,7 +48,6 @@ class manager:
             print('Error code: {}'.format(e.errno))
             print('SQLSTATE value: {}'.format(e.sqlstate))
             print('Error messsage: {}'.format(e.msg))
-            print('\033[01;31mStop\033[0m')
             return False
 
     def run(self):
@@ -103,10 +104,7 @@ class manager:
 
         """
         estimated_action = self.which_action(student_id)
-        print('{"' + student_id + '","' + estimated_action + '"}')
         whois = self.get_member(student_id) # whois : (student_id, name)
-        print(str(whois) + ', ' + estimated_action)
-        print(type(whois))
         query = ''
 
         if estimated_action == 'enter':
@@ -116,22 +114,26 @@ class manager:
             query = 'INSERT INTO room_exits (student_id, student_name) VALUES {}'.format(whois)
 
         elif estimated_action == 'error':
+            query = 'INSERT INTO error_log (student_id, student_name) VALUES {}'.format(whois)
             print('\033[01;31mThere is some error in log table.\033[0m')
-            return False
 
         with atclscur(self.cnx) as cur:
             try:
                 cur.execute(query)
                 self.cnx.commit()
-                sound_util.play_voice(estimated_action)
-                return True
 
             except mc.Error as e:
                 print('Error code: {}'.format(e.errno))
                 print('SQLSTATE value: {}'.format(e.sqlstate))
                 print('Error messsage: {}'.format(e.msg))
-                print('\033[01;31mStop\033[0m')
+                print('\033[01;31mReturn\033[0m')
                 return False
+
+            sound_util.play_voice(estimated_action) # Greeting
+
+            state = {'id': whois[0], 'name': whois[1], 'action': estimated_action}
+            dispatch_util.dispatch_touch_event(state) # Dispatch information on enttry/exited to View app
+            return True
 
     def which_action(self, student_id):
         """今のタッチが入室のタッチなのかそれとも退室のタッチなのかを判定する
@@ -172,7 +174,7 @@ class manager:
                     return 'enter'
 
     def get_member(self, whose_id):
-        """active_memberテーブルから与えられた学籍番号と紐づく氏名を取ってくる
+        """member_listテーブルから与えられた学籍番号と紐づく氏名を取ってくる
             学籍番号が登録されているもの以外だった場合は氏名を'Unknown'として返す
 
         Parameters
@@ -187,11 +189,11 @@ class manager:
 
         """
         with atclscur(self.cnx) as cur:
-            cur.execute('SELECT id,name FROM active_members WHERE id = {}'.format(whose_id))
+            cur.execute('SELECT id,name FROM member_list WHERE id = {}'.format(whose_id))
             member_record = cur.fetchone()
- 
+
         if member_record == None:
             member_record = (whose_id, 'Unknown student') # Make sure to use 'tuple' (not 'list')
- 
+
         return member_record
 
