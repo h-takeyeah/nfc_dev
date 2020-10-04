@@ -2,7 +2,7 @@ import json
 import nfc
 import mysql.connector as mc
 from auto_close_cursor import AutoCloseCursor as atclscur
-from sound_util import SoundUtil as su
+import sound_util
 
 class manager:
     """入退室管理の処理を行う本体
@@ -103,8 +103,10 @@ class manager:
 
         """
         estimated_action = self.which_action(student_id)
-        print('estimated_action is ' + estimated_action)
-        whois = self.get_member(student_id) # whois : (student_id, name) 
+        print('{"' + student_id + '","' + estimated_action + '"}')
+        whois = self.get_member(student_id) # whois : (student_id, name)
+        print(str(whois) + ', ' + estimated_action)
+        print(type(whois))
         query = ''
 
         if estimated_action == 'enter':
@@ -121,7 +123,7 @@ class manager:
             try:
                 cur.execute(query)
                 self.cnx.commit()
-                su.play_sound(estimated_action)
+                sound_util.play_voice(estimated_action)
                 return True
 
             except mc.Error as e:
@@ -187,9 +189,9 @@ class manager:
         with atclscur(self.cnx) as cur:
             cur.execute('SELECT id,name FROM active_members WHERE id = {}'.format(whose_id))
             member_record = cur.fetchone()
-        
+ 
         if member_record == None:
             member_record = (whose_id, 'Unknown student') # Make sure to use 'tuple' (not 'list')
-        
+ 
         return member_record
 
