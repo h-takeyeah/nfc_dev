@@ -1,14 +1,13 @@
 # 某室の入退室管理システム
 
-2020年9月2日(水)時点での情報です
-
-**developブランチの現時点での最新版(1bb9f3e)について書いてある。SQLを使う。masterブランチのcsvを使うバージョン(現時点での最新版はea52942)とは全く異なるので注意**
+2020年10月5日(月)時点
 
 ## できること
 
 - 学生証をタッチした時間を学籍番号と名前と一緒に**SQLサーバーに記録する**
 - **入室か退室かを判定して**モニタ(というかコンソール)に表示する
 - メンバー以外の学生証がタッチされても一応記録に残す(学籍番号は記録できるが、名前は'Unknown'になる)
+- タッチしたら喋る。
 
 ## できそうなこと
 
@@ -26,16 +25,14 @@
 
 ## あったらいいな(必須以外)
 
-- 音声(動作の完了やエラーを報告)
 - カードリーダーに透明の箱をかぶせてそこに駅の改札の「ピタっとタッチ」的なマークを貼る
-- モニタの代わりにキャラクタ液晶に情報を映す
 - タッチパネル <- New!
 
 ## 事前準備
 
-Sonyのカードリーダー `PaSoRi SC-360/P`が必要。実験機のラズパイはUSBポートが1つしかないのでハブを噛ませていますが、ラズパイのUSBポートに余裕があれば直接接続する方がいいと思う。Python3を前提にしている。バージョン依存のコードはなるべく入れないように気をつけたが、もしあったらごめんなさい。バージョンが古いとpathlibモジュールが動かないかもしれない。また2のprintが3ではprint()だったりするそうなので、なるべく3.x系を使用するべし。
+Sonyのカードリーダー `PaSoRi SC-360/P`が必要。実験機のラズパイはUSBポートが1つしかないのでハブを噛ませているが、ラズパイのUSBポートに余裕があれば直接接続する方がいいと思う。Python3必須。
 
-```
+```plain
 Linux version 4.19.118+
 ARMv6-compatible processor rev 7 (v6l)
 BCM2835
@@ -50,33 +47,66 @@ mysql-connector-python 8.0.21
 ```
 
 で動作を確認している。
-本体であるgate.pyを動かすには`nfcpy`と`mysql-connector-python`モジュールが必要。インストールされていない場合はここでインストール。
+本体であるgate.pyを動かすには以下のモジュールが必要。インストールされていない場合はここでインストール。`-U`は最新版とってきてくれYOオプション。
 
+```plain
+pip3 install -U nfcpy mysql-connector-python simpleaudio
 ```
-$ pip3 install -U nfcpy mysql-connector-python
-```
 
-テーブルの構造は`src/create_schema.py`に書いてある。itsgateというDBが作成されている状態で、しかるべき設定を行い、これを実行するとテーブルの作成とメンバー情報の登録をやってくれる。
+テーブルの構造は`src/create_schema.py`に書いてある。**itsgateというDBがあらかじめ作成されている状態で**、これを実行(`python3 ./create_schema.py`)するとテーブルの作成とメンバー情報の登録をやってくれる。メンバー情報の元データについては後述。[ダウンロード - プロ生ちゃん](https://kei.pronama.jp/download/)から、それっぽいのをダウンロード&リネームして`voice`ディレクトリに保存する。
 
+ディレクトリ構成はこんな感じ。member_listはcsvで作ってやって適当な場所に保存して`create_schema.py`にパスを書いて、前述したとおり実行。終わったら削除しとくと安心。`config.json`は手作業で作る。
 
-ディレクトリ構成はこんな感じ。設定ファイルの`config.json`は手作業で作る。
-
-```
+```plain
 nfc_dev
 |-- README.md // このファイル
 `-- src
-    |-- auto_close_cursor.py // カーソルのラッパー
+    |-- auto_close_cursor.py
     |-- config.json // 設定ファイル
-    |-- create_schema.py // データベーススキーマの定義と作成スクリプト。1度作成した後は使わないと思う
-    |-- gate.py // 本体。これを実行する
-    `-- gate_manager.py // 本体2
+    |-- create_schema.py // データベーススキーマの定義と作成を行うやつ。1度作成した後は使わないと思う
+    |-- dispatch_util.py
+    |-- gate_manager.py
+    |-- start.py // これを実行する
+    `-- sound_util.py
+```
+
+設定ファイルの`config.json`は手作業で作る。テンプレートを以下に示す。ユーザー名とパスワードはMariaDBに設定したのと同じものを設定する。rootのものでも可。もし`default`と`maintenance`の部分をそれ以外の名前に変えたらコードの方(`create_schema.py`と`gate.py`)も書き換えること。
+
+```json
+{
+  "sql_connector_parameters": {
+    "default": {
+      "host": "localhost",
+      "port": 3306,
+      "user": "",
+      "password": "",
+      "database": "itsgate"
+    },
+    "maintenance": {
+      "host": "localhost",
+      "port": 3306,
+      "user": "",
+      "password": "",
+      "database": "itsgate",
+      "allow_local_infile": "True"
+    },
+    "root": {
+      "host": "localhost",
+      "port": 3306,
+      "user": "root",
+      "password": "",
+      "database": "itsgate"
+    }
+  }
+}
 ```
 
 ## 使い方
 
-```
-$ cd nfc_dev/mysrc/
-$ ./gate.py # 実行権限不足で動作しないなら chmod o+x gate.py
+```plain
+cd nfc_dev/mysrc/
+./start.py # 実行権限不足で動作しないなら chmod o+x gate.py
+
 [msg]Good morning!
 Please wait.
 [msg]Trying to establish connection to itsgate... Success
