@@ -47,7 +47,7 @@ mysql-connector-python 8.0.21
 ```
 
 で動作を確認している。
-本体であるgate.pyを動かすには以下のモジュールが必要。インストールされていない場合はここでインストール。`-U`は最新版とってきてくれYOオプション。
+動かすには以下のモジュールが必要。インストールされていない場合はここでインストール。`-U`は最新版とってきてくれYOオプション。
 
 ```plain
 pip3 install -U nfcpy mysql-connector-python simpleaudio
