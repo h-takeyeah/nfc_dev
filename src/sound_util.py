@@ -55,9 +55,8 @@ def play_voice(action):
         return True
     
     except FileNotFoundError as e:
-        print('\033[01;31m## SOUND_UTIL ##')
-        print('\033[01;31m{}'.format(e))
-        print('## SOUND_UTIL ##\033[0m')
+        print('\033[;33m## == Info from SOUND_UTIL ==')
+        print('##  \033[01;31m{}\033[0m\n'.format(e))
         """or did you encountered some sound trouble? HINT 'sudo raspi-config'"""
         return False
 
