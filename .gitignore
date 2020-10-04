@@ -1,3 +1,6 @@
 __pycache__/
 log/*
 memberlist/*
+voice/*
+src/config.json
+
