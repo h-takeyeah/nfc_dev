@@ -20,6 +20,15 @@ VOICE_LIST = {
 SOUND_LIST = {}
 
 def play_voice(action):
+    """音声ファイル(.wav)を再生する。セリフ用
+
+    Args:
+        action: str
+
+    Returns:
+       bool
+
+    """
     selif = ''
     h = dt.now().hour # 0 <= hour < 24
     if action == 'enter':
@@ -60,6 +69,6 @@ def play_voice(action):
         """or did you encountered some sound trouble? HINT 'sudo raspi-config'"""
         return False
 
-def beep(event):
+def beep(action):
     pass
 

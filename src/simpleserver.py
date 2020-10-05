@@ -1,21 +1,14 @@
-import os
 import sys
-import urllib.parse
-import html
 import json
 
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from http import HTTPStatus
 
+HOST = 'localhost'
 PORT = 8000
 
-#-------------------------------------------------------
-data = {}
-data["1234123412341234"] = "test1,test2,123,455,24,5,6,,4,,4344356,,34,ert"
-data["0000000000000000"] = "testdata2"
-#-------------------------------------------------------
-
+"""適当なサーバーを立ててPOSTを受け取るだけ"""
 class GetHandler(BaseHTTPRequestHandler):
     server_version = "HTTP Stub/0.1"
 
@@ -72,9 +65,5 @@ class GetHandler(BaseHTTPRequestHandler):
             return
 
 if __name__ == "__main__":
-    host = "localhost"
-    port = 8000
-
-    server = HTTPServer((host,port), GetHandler)
+    server = HTTPServer((HOST,PORT), GetHandler)
     server.serve_forever()
-

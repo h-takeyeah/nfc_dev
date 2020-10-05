@@ -2,8 +2,10 @@ import urllib.request
 import json
 from http import HTTPStatus
 
+HOST = 'localhost'
+PORT = 8000
 def dispatch_touch_event(obj):
-    """入退室またはエラーが発生したことを伝える
+    """JSONをPOSTして入退室またはエラーが発生したことを伝える
 
     Parameters
     ----------
@@ -14,7 +16,7 @@ def dispatch_touch_event(obj):
     json_data = json.dumps(obj).encode('utf-8')
     headers = {'Content-Type' : 'application/json'}
 
-    req = urllib.request.Request(url='http://localhost:8000', data=json_data, method='POST')
+    req = urllib.request.Request(url='http://{}:{}'.format(HOST,PORT), data=json_data, method='POST')
  
     try: urllib.request.urlopen(req)
     except urllib.error.URLError as e:

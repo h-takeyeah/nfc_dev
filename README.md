@@ -5,13 +5,14 @@
 ## できること
 
 - 学生証をタッチした時間を学籍番号と名前と一緒に**SQLサーバーに記録する**
-- **入室か退室かを判定して**モニタ(というかコンソール)に表示する
+- **入室か退室かを判定して**~~モニタ(というかコンソール)に表示する~~セリフを喋る
 - メンバー以外の学生証がタッチされても一応記録に残す(学籍番号は記録できるが、名前は'Unknown'になる)
-- タッチしたら喋る。
+- 一連の処理が終わったら何か喋る
+- SQL周りで何かしらのエラーが出たときに`error_log`テーブルに保存するようにした
 
 ## できそうなこと
 
-単に記録をcsvに残すだけだと難しかったメンバーの管理機能も既存のSQLの機能である程度できる(はず。コードが書けるとは言ってない)。
+単に記録をcsvに残すだけだと難しかったメンバーの更新もしやすくなると思う。このソースコードとは関係のないところで書くことになるとは思うが。
 
 - 解錠権持ちと一緒に入室したかどうか確認する
 - 在室状況をリアルタイムに監視する(web経由?)
@@ -53,9 +54,9 @@ mysql-connector-python 8.0.21
 pip3 install -U nfcpy mysql-connector-python simpleaudio
 ```
 
-テーブルの構造は`src/create_schema.py`に書いてある。**itsgateというDBがあらかじめ作成されている状態で**、これを実行(`python3 ./create_schema.py`)するとテーブルの作成とメンバー情報の登録をやってくれる。メンバー情報の元データについては後述。[ダウンロード - プロ生ちゃん](https://kei.pronama.jp/download/)から、それっぽいのをダウンロード&リネームして`voice`ディレクトリに保存する。
+テーブルの構造は`src/create_schema.py`に書いてある。**itsgateというDBとそれを操作できるユーザー(rootでも可)があらかじめ作成されている状態で**、これを実行(`python3 ./create_schema.py`)するとテーブルの作成とメンバー情報の登録をやってくれる。メンバー情報の元データについては後述。喋る機能を追加したので`voice`ディレクトリを作成して音声ファイルを保存する。例えばここ→[ダウンロード - プロ生ちゃん](https://kei.pronama.jp/download/)から、それっぽいのをダウンロード&リネームして`voice`ディレクトリに保存するなど。
 
-ディレクトリ構成はこんな感じ。member_listはcsvで作ってやって適当な場所に保存して`create_schema.py`にパスを書いて、前述したとおり実行。終わったら削除しとくと安心。`config.json`は手作業で作る。
+ディレクトリ構成はこんな感じ。member_listはcsvで作ってやって適当な場所に保存して`create_schema.py`にそのパスを書いて、前述したとおり実行。終わったらいらないので削除しとくと安心。
 
 ```plain
 nfc_dev
@@ -70,7 +71,7 @@ nfc_dev
     `-- sound_util.py
 ```
 
-設定ファイルの`config.json`は手作業で作る。テンプレートを以下に示す。ユーザー名とパスワードはMariaDBに設定したのと同じものを設定する。rootのものでも可。もし`default`と`maintenance`の部分をそれ以外の名前に変えたらコードの方(`create_schema.py`と`gate.py`)も書き換えること。
+設定ファイルの`config.json`は手作業で作る。テンプレートを以下に示す。ユーザー名とパスワードはMariaDBに設定したのと同じものを設定する。rootのものでも可。もし`default`と`maintenance`の部分をそれ以外の名前に変えたらコードの方(`create_schema.py`と`start.py`)も書き換えること。
 
 ```json
 {
@@ -106,12 +107,6 @@ nfc_dev
 ```plain
 cd nfc_dev/mysrc/
 ./start.py # 実行権限不足で動作しないなら chmod o+x gate.py
-
-[msg]Good morning!
-Please wait.
-[msg]Trying to establish connection to itsgate... Success
-[msg]Start main routine--- Press Ctrl+C to stop.
-(以下略)
 ```
 
 ## 覚え書き
@@ -119,4 +114,3 @@ Please wait.
 - 止めるときはCTRL+C長押し。
 - コンソール以外からテーブルをいじれるようにした方が良いかも?
 - (このコード内でデータベースに接続する)ユーザーからはUPDATE権限を剥奪しておくと記録の改ざんが軽減できるかも?
-

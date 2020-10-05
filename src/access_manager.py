@@ -1,12 +1,12 @@
-import json
 import nfc
 import mysql.connector as mc
-from collections import namedtuple
 from auto_close_cursor import AutoCloseCursor as atclscur
-import sound_util
-import dispatch_util
+import soundutils
+import dispatcherutils
 
-class manager:
+PASORI_S380_PATH = 'usb:054c:06c3'
+
+class AccessManager:
     """入退室管理の処理を行う本体
         クラスを作らなくてもいいのだがmysql.connector.connect()で生成したconnectorを
         使いまわしたかったのでこうした。global使うとスコープが分からなくなりそうだった。
@@ -16,11 +16,10 @@ class manager:
     ----------
         get_member : 学生証から読み取った学籍番号をメンバーの名前を対応させる
         cnx : mysql.connector.connection.MySQLConnection
-        which_action : 入室タッチか退室タッチか判定する
+        judge_action : 入室タッチか退室タッチか判定する
 
     """
-    PASORI_S380_PATH = 'usb:054c:06c3' 
-    
+
     def __init__(self):
         self.cnx = None
 
@@ -33,7 +32,7 @@ class manager:
                 mysql.connector.connect()に渡すパラメーター群
                 設定できる値は以下のAPIリファレンスを参照のこと
                 https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html
-                
+
         Returns
         -------
            bool
@@ -55,13 +54,13 @@ class manager:
         これがずっと回る
 
         """
-        with nfc.ContactlessFrontend(self.PASORI_S380_PATH) as clf:
+        with nfc.ContactlessFrontend(PASORI_S380_PATH) as clf:
             while clf.connect(rdwr={'on-connect': self.on_connect}):
                 pass
-    
+
     def on_connect(self, tag):
         """This function is called when a remote tag has been activated.
-            カードにアクセスできた後の処理はこの関数を起点にして行う    
+            カードにアクセスできた後の処理はこの関数を起点にして行う
 
         Parameters
         ----------
@@ -89,7 +88,7 @@ class manager:
 
     def insert_record(self, student_id):
         """INSERT文を発行する。またそのための下準備を各関数に命令する
-            which_action()に今のタッチが入室なのか退室なのかを判定させる
+            judge_action()に今のタッチが入室なのか退室なのかを判定させる
             get_member()に学籍番号と紐づく名前を取ってこさせる
             もろもろ大丈夫そうならINSERTする
 
@@ -103,18 +102,18 @@ class manager:
                 INSERTが成功したらTrue,それ以外ならFalse
 
         """
-        estimated_action = self.which_action(student_id)
-        whois = self.get_member(student_id) # whois : (student_id, name)
+        estimated_action = self.judge_action(student_id)
+        who = self.get_member(student_id) # who : (student_id, name)
         query = ''
 
         if estimated_action == 'enter':
-            query = 'INSERT INTO room_entries (student_id, student_name) VALUES {}'.format(whois)
- 
+            query = 'INSERT INTO room_entries (student_id, student_name) VALUES {}'.format(who)
+
         elif estimated_action == 'exit':
-            query = 'INSERT INTO room_exits (student_id, student_name) VALUES {}'.format(whois)
+            query = 'INSERT INTO room_exits (student_id, student_name) VALUES {}'.format(who)
 
         elif estimated_action == 'error':
-            query = 'INSERT INTO error_log (student_id, student_name) VALUES {}'.format(whois)
+            query = 'INSERT INTO error_log (student_id, student_name) VALUES {}'.format(who)
             print('\033[01;31mThere is some error in log table.\033[0m')
 
         with atclscur(self.cnx) as cur:
@@ -129,13 +128,13 @@ class manager:
                 print('\033[01;31mReturn\033[0m')
                 return False
 
-            sound_util.play_voice(estimated_action) # Greeting
+            soundutils.play_voice(estimated_action) # Greeting
 
-            state = {'id': whois[0], 'name': whois[1], 'action': estimated_action}
-            dispatch_util.dispatch_touch_event(state) # Dispatch information on enttry/exited to View app
+            props = {'id': who[0], 'name': who[1], 'action': estimated_action}
+            dispatcherutils.dispatch_touch_event(props) # Dispatch information on enttry/exited to View app
             return True
 
-    def which_action(self, student_id):
+    def judge_action(self, student_id):
         """今のタッチが入室のタッチなのかそれとも退室のタッチなのかを判定する
 
         Parameters
@@ -154,13 +153,13 @@ class manager:
         with atclscur(self.cnx) as cur:
             cur.execute('SELECT entered_at FROM room_entries WHERE student_id = {} AND DATE(entered_at) >= CURRENT_DATE() AND DATE(entered_at) < DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY) ORDER BY entered_at DESC LIMIT 1'.format(student_id))
             last_entered_at = cur.fetchone()
-            
+
             cur.execute('SELECT exited_at FROM room_exits WHERE student_id = {} AND DATE(exited_at) >= CURRENT_DATE() AND DATE(exited_at) < DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY) ORDER BY exited_at DESC LIMIT 1'.format(student_id))
             last_exited_at = cur.fetchone()
-                        
+
             if last_entered_at == None and last_exited_at != None: # Only exit log exists. (=has no pair) # Irregular
                 return 'error'
-            
+
             elif last_entered_at == None or last_exited_at == None:
                 if last_entered_at == None and last_exited_at == None: # First access
                     return 'enter'
