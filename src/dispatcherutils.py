@@ -14,9 +14,9 @@ def dispatch_touch_event(obj):
     """
 
     json_data = json.dumps(obj).encode('utf-8')
-    headers = {'Content-Type' : 'application/json'}
+    headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
-    req = urllib.request.Request(url='http://{}:{}'.format(HOST,PORT), data=json_data, method='POST')
+    req = urllib.request.Request(url='http://{}:{}'.format(HOST,PORT), headers=headers, data=json_data, method='POST')
  
     try: urllib.request.urlopen(req)
     except urllib.error.URLError as e:
