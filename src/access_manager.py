@@ -42,13 +42,20 @@ class AccessManager:
         """
         try:
             self.cnx = mc.connect(**config, buffered=True) # buffered : To avoid 'Unread result found' error.
-            return True
 
         except mc.Error as e:
             print('Error code: {}'.format(e.errno))
             print('SQLSTATE value: {}'.format(e.sqlstate))
             print('Error messsage: {}'.format(e.msg))
             return False
+        
+        with atclscur(self.cnx) as cur:
+            cur.execute('SELECT id,name FROM member_list')
+            responce = cur.fetchall()
+            for row in responce:
+                self.member_list[row[0]] = row[1]
+
+        return True
 
     def run(self):
         """メインルーチン
@@ -174,7 +181,7 @@ class AccessManager:
                     return 'enter'
 
     def get_member(self, whose_id):
-        """member_listテーブルから与えられた学籍番号と紐づく氏名を取ってくる
+        """学籍番号をキーにして学籍番号と名前のタプルを返す
             学籍番号が登録されているもの以外だった場合は氏名を'Unknown'として返す
 
         Parameters
@@ -188,12 +195,9 @@ class AccessManager:
                 INSERT文にそのまま使えるように(学籍番号,氏名)の形式で返す
 
         """
-        with atclscur(self.cnx) as cur:
-            cur.execute('SELECT id,name FROM member_list WHERE id = {}'.format(whose_id))
-            member_record = cur.fetchone()
-
-        if member_record == None:
-            member_record = (whose_id, 'Unknown student') # Make sure to use 'tuple' (not 'list')
-
-        return member_record
+        if int(whose_id) in self.member_list:
+            return (whose_id, self.member_list[int(whose_id)])
+        
+        else:
+            return (whose_id, 'Unknown student') # Make sure to use 'tuple' (not 'list')
 

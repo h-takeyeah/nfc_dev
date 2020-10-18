@@ -18,7 +18,6 @@ TABLES['member_list'] = (
         "CREATE TABLE `member_list` ("
         "   `id` int(8) unsigned NOT NULL,"
         "   `name` varchar(60) NOT NULL,"
-        "   `nickname` varchar(60),"
         "   `grade` year NOT NULL,"
         "   `is_holder` boolean NOT NULL DEFAULT 0,"
         "   PRIMARY KEY (`id`)"
@@ -36,7 +35,7 @@ TABLES['room_entries'] = (
 TABLES['room_exits'] = (
         "CREATE TABLE `room_exits`("
         "   `id` int unsigned NOT NULL AUTO_INCREMENT,"
-        "   `exited_at` datetime NOT NULL NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "   `exited_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,"
         "   `student_id` int(8) NOT NULL,"
         "   `student_name` varchar(60) NOT NULL,"
         "   INDEX(`id`)"
@@ -45,7 +44,7 @@ TABLES['room_exits'] = (
 TABLES['error_log'] = (
         "CREATE TABLE `error_log`("
         "   `id` int unsigned NOT NULL AUTO_INCREMENT,"
-        "   `error_happened` datetime NOT NULL NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "   `happened_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,"
         "   `student_id` int(8) NOT NULL,"
         "   `student_name` varchar(60) NOT NULL,"
         "   INDEX(`id`)"
@@ -71,10 +70,9 @@ try:
             else: # Success
                 print('OK')
         
-        query = 'LOAD DATA LOCAL INFILE \'{}\' INTO TABLE {}.member_list FIELDS TERMINATED BY \',\' IGNORE 1 LINES'.format(Path(MEMBERLIST_FILE).resolve(), cfg.get('database'))
         try:
             print('Inserting member info... ', end='')
-            cur.execute(query)
+            cur.execute('LOAD DATA LOCAL INFILE \'{}\' INTO TABLE {}.member_list FIELDS TERMINATED BY \',\' IGNORE 1 LINES'.format(Path(MEMBERLIST_FILE).resolve(), cfg.get('database')))
             cnx.commit() # Do not forget 'connector.commit()'.
         
         except mysql.connector.Error as e:
