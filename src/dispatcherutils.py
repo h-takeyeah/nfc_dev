@@ -21,8 +21,8 @@ def dispatch_touch_event(obj):
     try: urllib.request.urlopen(req)
     except urllib.error.URLError as e:
         print('\033[;33m## == Info from DISPATCH_UTIL ==')
-        print('##  \033[01;31m{}\033[;33m'.format(e))
-        print('##  This is not a critical error, but sending to message to View app (monitor) has failed.\033[0m\n')
+        print('## \033[01;31m{}\033[;33m'.format(e))
+        print('## Sending a message to Viewer failed. (not serious)\033[0m\n')
         pass
 
     return

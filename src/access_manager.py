@@ -22,6 +22,7 @@ class AccessManager:
 
     def __init__(self):
         self.cnx = None
+        self.member_list = {}
 
     def connect_to_db(self, config): # config : <class 'dict'>
         """
