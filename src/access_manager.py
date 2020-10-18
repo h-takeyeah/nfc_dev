@@ -51,8 +51,8 @@ class AccessManager:
         
         with atclscur(self.cnx) as cur:
             cur.execute('SELECT id,name FROM member_list')
-            responce = cur.fetchall()
-            for row in responce:
+            response = cur.fetchall()
+            for row in response:
                 self.member_list[row[0]] = row[1]
 
         return True
