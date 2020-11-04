@@ -1,9 +1,17 @@
 import urllib.request
+import urllib.error
 import json
-from http import HTTPStatus
+from datetime import datetime
 
 HOST = 'localhost'
-PORT = 8000
+PORT = 3001
+
+# https://qiita.com/podhmo/items/dc748a9d40026c28556d
+def support_datetune_default(o):
+    if isinstance(o, datetime):
+        return o.strftime('%H:%M')
+    raise TypeError(repr(o) + 'is not JSON serializable')
+
 def dispatch_touch_event(obj):
     """JSONをPOSTして入退室またはエラーが発生したことを伝える
 
@@ -12,11 +20,13 @@ def dispatch_touch_event(obj):
         obj : dict
 
     """
+    if 'timestamp' not in obj:
+        obj['timestamp'] = datetime.now()
 
-    json_data = json.dumps(obj).encode('utf-8')
+    json_data = json.dumps(obj, default=support_datetune_default).encode('utf-8')
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
-    req = urllib.request.Request(url='http://{}:{}'.format(HOST,PORT), headers=headers, data=json_data, method='POST')
+    req = urllib.request.Request(url='http://{}:{}/api/card_touched'.format(HOST,PORT), headers=headers, data=json_data, method='POST')
  
     try: urllib.request.urlopen(req)
     except urllib.error.URLError as e:
