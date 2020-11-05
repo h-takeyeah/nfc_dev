@@ -31,21 +31,13 @@ TABLES['in_room'] = (
         "   PRIMARY KEY (`id`)"
         ")")
 
-TABLES['room_entries'] = (
-        "CREATE TABLE `room_entries` ("
+TABLES['access_log'] = (
+        "CREATE TABLE `access_log`("
         "   `id` int unsigned NOT NULL AUTO_INCREMENT,"
-        "   `entered_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,"
         "   `student_id` int(8) NOT NULL,"
         "   `student_name` varchar(60) NOT NULL,"
-        "   INDEX(`id`)"
-        ")")
-
-TABLES['room_exits'] = (
-        "CREATE TABLE `room_exits`("
-        "   `id` int unsigned NOT NULL AUTO_INCREMENT,"
-        "   `exited_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-        "   `student_id` int(8) NOT NULL,"
-        "   `student_name` varchar(60) NOT NULL,"
+        "   `entered_at` datetime,"
+        "   `exited_at` datetime,"
         "   INDEX(`id`)"
         ")")
 
@@ -80,7 +72,7 @@ try:
         
         try:
             print('Inserting member info... ', end='')
-            cur.execute('LOAD DATA LOCAL INFILE \'{}\' INTO TABLE {}.member_list FIELDS TERMINATED BY \',\' IGNORE 1 LINES'.format(Path(MEMBERLIST_FILE).resolve(), cfg.get('database')))
+            cur.execute('LOAD DATA LOCAL INFILE \'{}\' IGNORE INTO TABLE {}.member_list CHARACTER SET utf8 FIELDS TERMINATED BY \',\' IGNORE 1 LINES'.format(Path(MEMBERLIST_FILE).resolve(), cfg.get('database')))
             cnx.commit() # Do not forget 'connector.commit()'.
         
         except mysql.connector.Error as e:

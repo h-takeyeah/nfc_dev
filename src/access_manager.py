@@ -1,5 +1,6 @@
 import nfc
 import mysql.connector as mc
+import time
 from auto_close_cursor import AutoCloseCursor as atclscur
 import soundutils
 import dispatcherutils
@@ -111,18 +112,21 @@ class AccessManager:
 
         """
         estimated_action = self.judge_action(student_id)
-        who = self.get_member(student_id) # who : (student_id, name)
+        value = self.get_member(student_id) # who : (student_id, name)
+        value.append(time.strftime('%Y-%m-%d %H:%M:%S'))
+        value = tuple(value)
         query = ''
 
         if estimated_action == 'enter':
-            query = 'INSERT INTO room_entries (student_id, student_name) VALUES {}'.format(who)
-
+            query = 'INSERT INTO access_log (student_id, student_name, exited_at) VALUES {}'.format(value)
         elif estimated_action == 'exit':
-            query = 'INSERT INTO room_exits (student_id, student_name) VALUES {}'.format(who)
+            query = 'INSERT INTO access_log (student_id, student_name, entered_at) VALUES {}'.format(value)
 
-        elif estimated_action == 'error':
-            query = 'INSERT INTO error_log (student_id, student_name) VALUES {}'.format(who)
-            print('\033[01;31mThere is some error in log table.\033[0m')
+        print(query)
+
+        #elif estimated_action == 'error':
+        #    query = 'INSERT INTO error_log (student_id, student_name) VALUES {}'.format(who)
+        #    print('\033[01;31mThere is some error in erroe_log table.\033[0m')
 
         with atclscur(self.cnx) as cur:
             try:
@@ -136,9 +140,9 @@ class AccessManager:
                 print('\033[01;31mReturn\033[0m')
                 return False
 
-            soundutils.play_voice(estimated_action) # Greeting
+            #soundutils.play_voice(estimated_action) # Greeting
 
-            props = {'id': who[0], 'name': who[1], 'action': estimated_action}
+            props = {'id': value[0], 'name': value[1], 'action': estimated_action}
             dispatcherutils.dispatch_touch_event(props) # Dispatch information on enttry/exited to View app
             return True
 
@@ -152,33 +156,19 @@ class AccessManager:
         Returns
         -------
             str
-                入室なら'enter'、退室なら'exit'。またレコードをチェックした際に
-                対応する入室記録が無いのに退室記録だけあったことが分かったら'error'
-                'error'はテーブルがまっさらな状態でプログラムをスタートさせれば、
-                テーブルをUPDATEしない限り発生しないはず...
+                在室中(in)なら退室時のタッチと判定して'exit'、そうでなかったら'enter'を返す
 
         """
         with atclscur(self.cnx) as cur:
-            cur.execute('SELECT entered_at FROM room_entries WHERE student_id = {} AND DATE(entered_at) >= CURRENT_DATE() AND DATE(entered_at) < DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY) ORDER BY entered_at DESC LIMIT 1'.format(student_id))
-            last_entered_at = cur.fetchone()
+            cur.execute('SELECT mode FROM in_room WHERE id = {}'.format(student_id))
+            mode = cur.fetchone()
+            self.switch_mode(student_id)
+            return 'exit' if mode != None and mode == 'in' else 'enter'
 
-            cur.execute('SELECT exited_at FROM room_exits WHERE student_id = {} AND DATE(exited_at) >= CURRENT_DATE() AND DATE(exited_at) < DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY) ORDER BY exited_at DESC LIMIT 1'.format(student_id))
-            last_exited_at = cur.fetchone()
-
-            if last_entered_at == None and last_exited_at != None: # Only exit log exists. (=has no pair) # Irregular
-                return 'error'
-
-            elif last_entered_at == None or last_exited_at == None:
-                if last_entered_at == None and last_exited_at == None: # First access
-                    return 'enter'
-                elif last_entered_at != None and last_exited_at == None: # In room, he is about to exit. (second access)
-                    return 'exit'
-
-            else: # Regular
-                if last_entered_at > last_exited_at:
-                    return 'exit'
-                else:
-                    return 'enter'
+    def switch_mode(self, student_id):
+        #with atclscur(self.cnx) as cur:
+        #    cur.execute('REPLACE INTO in_room')
+        return
 
     def get_member(self, whose_id):
         """学籍番号をキーにして学籍番号と名前のタプルを返す
@@ -191,13 +181,13 @@ class AccessManager:
 
         Returns
         -------
-            tuple
-                INSERT文にそのまま使えるように(学籍番号,氏名)の形式で返す
+            list
+                [学籍番号,氏名]
 
         """
         if int(whose_id) in self.member_list:
-            return (whose_id, self.member_list[int(whose_id)])
+            return [whose_id, self.member_list[int(whose_id)]]
         
         else:
-            return (whose_id, 'Unknown student') # Make sure to use 'tuple' (not 'list')
+            return [whose_id, 'Unknown student'] # Make sure to use 'tuple' (not 'list')
 
