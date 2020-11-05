@@ -23,6 +23,14 @@ TABLES['member_list'] = (
         "   PRIMARY KEY (`id`)"
         ")")
 
+TABLES['in_room'] = (
+        "CREATE TABLE `in_room` ("
+        "   `id` int(8) unsigned NOT NULL,"
+        "   `name` varchar(60) NOT NULL,"
+        "   `mode` char(3) NOT NULL DEFAULT 'out',"
+        "   PRIMARY KEY (`id`)"
+        ")")
+
 TABLES['room_entries'] = (
         "CREATE TABLE `room_entries` ("
         "   `id` int unsigned NOT NULL AUTO_INCREMENT,"
