@@ -1,6 +1,5 @@
 import nfc
 import mysql.connector as mc
-import time
 from auto_close_cursor import AutoCloseCursor as atclscur
 import soundutils
 import dispatcherutils
@@ -45,9 +44,9 @@ class AccessManager:
             self.cnx = mc.connect(**config, buffered=True) # buffered : To avoid 'Unread result found' error.
 
         except mc.Error as e:
-            print('Error code: {}'.format(e.errno))
-            print('SQLSTATE value: {}'.format(e.sqlstate))
-            print('Error messsage: {}'.format(e.msg))
+            print('[!] Error code: {}'.format(e.errno))
+            print('[!] SQLSTATE value: {}'.format(e.sqlstate))
+            print('[!] Error messsage: {}'.format(e.msg))
             return False
         
         with atclscur(self.cnx) as cur:
@@ -88,18 +87,22 @@ class AccessManager:
             block_data = tag.read_without_encryption([sc], [bc])
 
         except nfc.tag.TagCommandError as e:
-            print('\033[01;31m{}\n\033[01;33mToo short. Please touch your card again\033[0m'.format(e)) # Text color red
+            print('\033[01;31m[!] {}\n\033[01;33m[!] Too short. Please touch your card again\033[0m\n'.format(e)) # Text color red
 
-        if not self.insert_record(block_data[1:9].decode('utf-8')): # Insert failue
-            return False
+        try:
+            if not self.insert_record(block_data[1:9].decode('utf-8')): # Insert failue
+                return False
+        except UnboundLocalError: # local variable 'block_data' referenced before assignment
+            print('\033[01;33m[!] Your card seems to be unavailable. \n[!] Is this really an ID card for Shizuoka University?\033[0m\n')
 
         return True
 
     def insert_record(self, student_id):
-        """INSERT文を発行する。またそのための下準備を各関数に命令する
-            judge_action()に今のタッチが入室なのか退室なのかを判定させる
-            get_member()に学籍番号と紐づく名前を取ってこさせる
-            もろもろ大丈夫そうならINSERTする
+        """データベースにINSERT文かUPDATE文を発行して入退室記録をつける
+           access_logにクエリを出す
+           学籍番号にまつわるレコードのうち入室時間は記録されていて退室時間がNULLであるものを取ってくる
+           そのようなレコードがなければ入室のアクションなので新たに挿入する(INSERT)
+           そのようなレコードがあればそのレコードに対してexited_at列に退室時間を追加するという更新処理を施す(UPDATE)
 
         Parameters
         ----------
@@ -108,25 +111,19 @@ class AccessManager:
         Returns
         -------
            bool
-                INSERTが成功したらTrue,それ以外ならFalse
+                INSERT(またはUPDATE)が成功したらTrue,それ以外ならFalse
 
         """
-        estimated_action = self.judge_action(student_id)
-        value = self.get_member(student_id) # who : (student_id, name)
-        value.append(time.strftime('%Y-%m-%d %H:%M:%S'))
-        value = tuple(value)
-        query = ''
+        with atclscur(self.cnx) as cur:
+            cur.execute('SELECT student_id,entered_at FROM access_log WHERE student_id = {} AND exited_at IS NULL'.format(student_id))
+            res = cur.fetchone()
 
-        if estimated_action == 'enter':
-            query = 'INSERT INTO access_log (student_id, student_name, exited_at) VALUES {}'.format(value)
-        elif estimated_action == 'exit':
-            query = 'INSERT INTO access_log (student_id, student_name, entered_at) VALUES {}'.format(value)
-
-        print(query)
-
-        #elif estimated_action == 'error':
-        #    query = 'INSERT INTO error_log (student_id, student_name) VALUES {}'.format(who)
-        #    print('\033[01;31mThere is some error in erroe_log table.\033[0m')
+        who = self.get_member(student_id)
+        action = 'enter'
+        query = 'INSERT INTO access_log (student_id,student_name) VALUES {}'.format(who) # enter
+        if res != None:
+            action = 'exit'
+            query = 'UPDATE access_log SET exited_at=NOW() WHERE student_id = {} AND entered_at = \'{}\''.format(res[0], res[1]) # exit
 
         with atclscur(self.cnx) as cur:
             try:
@@ -134,45 +131,21 @@ class AccessManager:
                 self.cnx.commit()
 
             except mc.Error as e:
-                print('Error code: {}'.format(e.errno))
-                print('SQLSTATE value: {}'.format(e.sqlstate))
-                print('Error messsage: {}'.format(e.msg))
-                print('\033[01;31mReturn\033[0m')
+                print('[!] Error code: {}'.format(e.errno))
+                print('[!] SQLSTATE value: {}'.format(e.sqlstate))
+                print('[!] Error messsage: {}'.format(e.msg))
+                print('\033[01;31m[!] Return due to SQL error.\033[0m')
                 return False
 
-            #soundutils.play_voice(estimated_action) # Greeting
+            soundutils.play_voice(action) # Greeting
 
-            props = {'id': value[0], 'name': value[1], 'action': estimated_action}
+            props = {'id': who[0], 'name': who[1], 'action': action}
             dispatcherutils.dispatch_touch_event(props) # Dispatch information on enttry/exited to View app
             return True
 
-    def judge_action(self, student_id):
-        """今のタッチが入室のタッチなのかそれとも退室のタッチなのかを判定する
-
-        Parameters
-        ----------
-            student_id : str
-
-        Returns
-        -------
-            str
-                在室中(in)なら退室時のタッチと判定して'exit'、そうでなかったら'enter'を返す
-
-        """
-        with atclscur(self.cnx) as cur:
-            cur.execute('SELECT mode FROM in_room WHERE id = {}'.format(student_id))
-            mode = cur.fetchone()
-            self.switch_mode(student_id)
-            return 'exit' if mode != None and mode == 'in' else 'enter'
-
-    def switch_mode(self, student_id):
-        #with atclscur(self.cnx) as cur:
-        #    cur.execute('REPLACE INTO in_room')
-        return
-
     def get_member(self, whose_id):
         """学籍番号をキーにして学籍番号と名前のタプルを返す
-            学籍番号が登録されているもの以外だった場合は氏名を'Unknown'として返す
+           学籍番号が登録されているもの以外だった場合は氏名を'Guest'として返す
 
         Parameters
         ----------
@@ -181,13 +154,13 @@ class AccessManager:
 
         Returns
         -------
-            list
-                [学籍番号,氏名]
+            tuple
+                (学籍番号, 氏名)
 
         """
         if int(whose_id) in self.member_list:
-            return [whose_id, self.member_list[int(whose_id)]]
+            return (whose_id, self.member_list[int(whose_id)])
         
         else:
-            return [whose_id, 'Unknown student'] # Make sure to use 'tuple' (not 'list')
+            return (whose_id, 'Guest') # Make sure to use 'tuple' (not 'list')
 

@@ -23,22 +23,21 @@ TABLES['member_list'] = (
         "   PRIMARY KEY (`id`)"
         ")")
 
-TABLES['in_room'] = (
-        "CREATE TABLE `in_room` ("
-        "   `id` int(8) unsigned NOT NULL,"
-        "   `name` varchar(60) NOT NULL,"
-        "   `mode` char(3) NOT NULL DEFAULT 'out',"
-        "   PRIMARY KEY (`id`)"
-        ")")
+#TABLES['in_room'] = (
+#        "CREATE TABLE `in_room` ("
+#        "   `id` int(8) unsigned NOT NULL,"
+#        "   `name` varchar(60) NOT NULL,"
+#        "   `mode` char(3) NOT NULL DEFAULT 'out',"
+#        "   PRIMARY KEY (`id`)"
+#        ")")
 
 TABLES['access_log'] = (
         "CREATE TABLE `access_log`("
-        "   `id` int unsigned NOT NULL AUTO_INCREMENT,"
         "   `student_id` int(8) NOT NULL,"
         "   `student_name` varchar(60) NOT NULL,"
-        "   `entered_at` datetime,"
-        "   `exited_at` datetime,"
-        "   INDEX(`id`)"
+        "   `entered_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "   `exited_at` datetime DEFAULT NULL,"
+        "   PRIMARY KEY (`student_id`, `entered_at`)"
         ")")
 
 TABLES['error_log'] = (
