@@ -120,7 +120,7 @@ class AccessManager:
 
         who = self.get_member(student_id)
         action = 'enter'
-        query = 'INSERT INTO access_log (student_id,student_name) VALUES {}'.format(who) # enter
+        query = 'INSERT INTO access_log (student_id) VALUES ({})'.format(student_id) # enter
         if res != None:
             action = 'exit'
             query = 'UPDATE access_log SET exited_at=NOW() WHERE student_id = {} AND entered_at = \'{}\''.format(res[0], res[1]) # exit
