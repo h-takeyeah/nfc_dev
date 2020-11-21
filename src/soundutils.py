@@ -64,6 +64,17 @@ def play_voice(action):
     return
 
 def emit(words):
+    """セリフを発話させる
+
+    Parameters
+    ----------
+        words : list
+
+    Returns
+    -------
+        成功したらTrue、ファイルが見つからなくて失敗したらFalse
+
+    """
     for key in words:
         try:
             wave_obj = sa.WaveObject.from_wave_file(AUDIO_LIST[key])
