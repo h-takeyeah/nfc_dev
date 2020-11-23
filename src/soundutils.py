@@ -57,6 +57,9 @@ def play_voice(action):
         else:
             selif.append('oyasumi')
 
+    elif action == 'warning':
+        selif = ['warning']
+
     else:
         selif = ['warning','shippai']
 
@@ -82,10 +85,9 @@ def emit(words):
             play_obj.wait_done()
     
         except FileNotFoundError as e:
-            print('\033[;33m[!] == Info from SOUND_UTIL ==')
-            print('[!]  \033[01;31m{}\033[0m\n'.format(e))
-            """or did you encountered some sound trouble? HINT 'sudo raspi-config'"""
+            print('\033[;33m[!]\033[0m {}\n'.format(e))
+            """Or did you encounter some sound trouble? HINT 'sudo raspi-config'"""
             return False
 
-    return True # after finishing for operation
+    return True # After finishing for operation
 

@@ -1,6 +1,4 @@
 __pycache__/
-log/*
 memberlist/*
 audio/*
-src/config.json
-
+.env

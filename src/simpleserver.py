@@ -1,6 +1,6 @@
 import sys
 import json
-
+import random
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 from http import HTTPStatus
@@ -9,7 +9,7 @@ HOST = 'localhost'
 PORT = 8000
 
 """適当なサーバーを立ててPOSTを受け取るだけ"""
-class GetHandler(BaseHTTPRequestHandler):
+class TestHandler(BaseHTTPRequestHandler):
     server_version = "HTTP Stub/0.1"
 
     def __init__(self, *args, **kwargs):
@@ -43,9 +43,9 @@ class GetHandler(BaseHTTPRequestHandler):
 
         length = self.headers.get('content-length')
         nbytes = int(length)
-        # print(self.rfile)
+        #print(self.rfile)
         request_body = self.rfile.read(nbytes).decode('utf-8')
-        # print(request_body)
+        #print(request_body)
 
         try:
             data = json.loads(request_body)
@@ -56,7 +56,11 @@ class GetHandler(BaseHTTPRequestHandler):
             self.send_response(HTTPStatus.OK)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(request_body.encode('utf-8'))
+            
+            if random.randrange(10) % 2: my_response = {'action': 'enter'}
+            else: my_response = {'action': 'exit'}
+            #self.wfile.write(json.dumps(my_response).encode('utf-8'))
+            self.wfile.write(json.dumps({'action': 'error'}).encode('utf-8'))
             return
 
         except:
@@ -65,5 +69,5 @@ class GetHandler(BaseHTTPRequestHandler):
             return
 
 if __name__ == "__main__":
-    server = HTTPServer((HOST,PORT), GetHandler)
+    server = HTTPServer((HOST,PORT), TestHandler)
     server.serve_forever()
