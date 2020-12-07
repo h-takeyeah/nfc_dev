@@ -4,13 +4,13 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/home/pi/dev2020/Access-management-system/src/start.py
+ExecStart=/home/pi/Access-management-system/src/start.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 KillMode=process
 User=pi
 Group=pi
-WorkingDirectory=/home/pi/dev2020/Access-management-system/src/
+WorkingDirectory=/home/pi/Access-management-system/src/
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=access-management-system
