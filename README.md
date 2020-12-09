@@ -1,116 +1,76 @@
-# 某室の入退室管理システム
+# 入退室管理システム
 
-2020年10月5日(月)時点
+2020年12月9日(水)時点
 
 ## できること
 
-- 学生証をタッチした時間を学籍番号と名前と一緒に**SQLサーバーに記録する**
+- 学生証をタッチした時間と学籍番号を**SQLサーバーに記録する**
 - **入室か退室かを判定して**~~モニタ(というかコンソール)に表示する~~セリフを喋る
 - メンバー以外の学生証がタッチされても一応記録に残す(学籍番号は記録できるが、名前は'Unknown'になる)
+- ↑記録するかどうかは選べるようになった
 - 一連の処理が終わったら何か喋る
-- SQL周りで何かしらのエラーが出たときに`error_log`テーブルに保存するようにした
+- ~~SQL周りで何かしらのエラーが出たときに`error_log`テーブルに保存するようにした~~
 
 ## できそうなこと
 
-単に記録をcsvに残すだけだと難しかったメンバーの更新もしやすくなると思う。このソースコードとは関係のないところで書くことになるとは思うが。
-
-- 解錠権持ちと一緒に入室したかどうか確認する
-- 在室状況をリアルタイムに監視する(web経由?)
+- 在室状況をリアルタイムに監視する
 
 ## できていないこと(必須機能/太字は必要度高)
 
-- 入室時刻と退室時刻が日をまたぎそうな場合の処理(0時少し前に、締め作業としてその日の入室記録があるのにまだ退室記録が無い人は自動的に退室処理をしてしまう。日付が変わったら再びタッチを受け付けるようにする、とかで解決できそう。日付が変わった直後に思い出して、退出のつもりでタッチしたら無限ループ入りそう。自動で退出処理が行われた場合は注意してればいいか)
+- 入室時刻と退室時刻が日をまたぎそうな場合の処理
 - **入室したメンバーへの通知**(室を利用した理由を書くのは手動でやってもらわないとなので)
 - 短時間に何回もタッチするなどのいたずら対策
 - **SharePointへの自動アップロード**(定時に自動でローカルと同期させるか、SharePoint上のファイルを直接更新するか。必ずしもSharePointに記録がなくてもいいと思う(Microsoft Graphワカラナイ)。必ずそうしろと言うならしかたないけど)
 
-## あったらいいな(必須以外)
-
-- カードリーダーに透明の箱をかぶせてそこに駅の改札の「ピタっとタッチ」的なマークを貼る
-- タッチパネル <- New!
-
 ## 事前準備
 
-Sonyのカードリーダー `PaSoRi SC-360/P`が必要。実験機のラズパイはUSBポートが1つしかないのでハブを噛ませているが、ラズパイのUSBポートに余裕があれば直接接続する方がいいと思う。Python3必須。
+Sonyのカードリーダー `PaSoRi SC-360/P`が必要。Python3必須。
+
+### 動作確認したラズパイの仕様
 
 ```plain
-Linux version 4.19.118+
-ARMv6-compatible processor rev 7 (v6l)
+Linux boushitsu 4.19.66-v7+
+ARMv7 Processor rev 4 (v7l)
 BCM2835
-Raspberry Pi Model A Rev 2
-Raspbian GNU/Linux 10 (buster)
+Raspberry Pi 3 Model B Rev 1.2
+Raspbian GNU/Linux 9 (stretch)
 
-Python 3.7.3
+Python 3.5.3
+
 nfcpy 1.0.3
+simpleaudio 1.0.4
+python-dotenv 0.10.1
 
-mysql  Ver 15.1 Distrib 10.3.23-MariaDB, for debian-linux-gnueabihf (armv7l) using readline 5.2
-mysql-connector-python 8.0.21
+mysqld  Ver 10.1.47-MariaDB-0+deb9u1 for debian-linux-gnueabihf on armv7l (Raspbian 9.11)
+mysql  Ver 15.1 Distrib 10.1.47-MariaDB, for debian-linux-gnueabihf (armv7l) using readline 5.2
 ```
 
-で動作を確認している。
-動かすには以下のモジュールが必要。インストールされていない場合はここでインストール。`-U`は最新版とってきてくれYOオプション。
+必要なモジュールがインストールされていない場合は以下の通インストール。
 
 ```plain
-pip3 install -U nfcpy mysql-connector-python simpleaudio
+pip3 install -r requirement.txt
 ```
 
-テーブルの構造は`src/create_schema.py`に書いてある。**itsgateというDBとそれを操作できるユーザー(rootでも可)があらかじめ作成されている状態で**、これを実行(`python3 ./create_schema.py`)するとテーブルの作成とメンバー情報の登録をやってくれる。メンバー情報の元データについては後述。喋る機能を追加したので`voice`ディレクトリを作成して音声ファイルを保存する。例えばここ→[ダウンロード - プロ生ちゃん](https://kei.pronama.jp/download/)から、それっぽいのをダウンロード&リネームして`voice`ディレクトリに保存するなど。
-
-ディレクトリ構成はこんな感じ。member_listはcsvで作ってやって適当な場所に保存して`create_schema.py`にそのパスを書いて、前述したとおり実行。終わったらいらないので削除しとくと安心。
+最終的にこうなる
 
 ```plain
-nfc_dev
+Access-management-system
 |-- README.md // このファイル
-`-- src
-    |-- auto_close_cursor.py
-    |-- config.json // 設定ファイル
-    |-- create_schema.py // データベーススキーマの定義と作成を行うやつ。1度作成した後は使わないと思う
-    |-- dispatch_util.py
-    |-- gate_manager.py
+|-- .env
+|-- audio/ // 雰囲気で作る
+`-- src/
     |-- start.py // これを実行する
-    `-- sound_util.py
-```
-
-設定ファイルの`config.json`は手作業で作る。テンプレートを以下に示す。ユーザー名とパスワードはMariaDBに設定したのと同じものを設定する。rootのものでも可。もし`default`と`maintenance`の部分をそれ以外の名前に変えたらコードの方(`create_schema.py`と`start.py`)も書き換えること。
-
-```json
-{
-  "sql_connector_parameters": {
-    "default": {
-      "host": "localhost",
-      "port": 3306,
-      "user": "",
-      "password": "",
-      "database": "itsgate"
-    },
-    "maintenance": {
-      "host": "localhost",
-      "port": 3306,
-      "user": "",
-      "password": "",
-      "database": "itsgate",
-      "allow_local_infile": "True"
-    },
-    "root": {
-      "host": "localhost",
-      "port": 3306,
-      "user": "root",
-      "password": "",
-      "database": "itsgate"
-    }
-  }
-}
+    |-- connectionutils.py
+    `-- soundutils.py
 ```
 
 ## 使い方
 
 ```plain
-cd nfc_dev/mysrc/
-./start.py # 実行権限不足で動作しないなら chmod o+x gate.py
+under construction
 ```
 
 ## 覚え書き
 
 - 止めるときはCTRL+C長押し。
-- コンソール以外からテーブルをいじれるようにした方が良いかも?
-- (このコード内でデータベースに接続する)ユーザーからはUPDATE権限を剥奪しておくと記録の改ざんが軽減できるかも?
+
