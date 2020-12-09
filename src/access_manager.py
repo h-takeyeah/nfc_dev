@@ -77,9 +77,15 @@ class AccessManager:
         これがずっと回る
 
         """
-        with nfc.ContactlessFrontend(PASORI_S380_PATH) as clf:
-            while clf.connect(rdwr={'on-connect': self.on_connect}):
-                pass
+        try:
+            with nfc.ContactlessFrontend(PASORI_S380_PATH) as clf:
+                while clf.connect(rdwr={'on-connect': self.on_connect}):
+                    pass
+        except OSError as ose:
+            print('\033[01;31m[!] {}\033[0m'.format(ose))
+            su.play_voice('error')
+            print('\033[01;31m[!] Stop\033[0m')
+            exit(-1)
 
     def on_connect(self, tag):
         """This function is called when a remote tag has been activated.
