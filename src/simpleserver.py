@@ -57,10 +57,12 @@ class TestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             
-            if random.randrange(10) % 2: my_response = {'action': 'enter'}
-            else: my_response = {'action': 'exit'}
-            #self.wfile.write(json.dumps(my_response).encode('utf-8'))
-            self.wfile.write(json.dumps({'action': 'error'}).encode('utf-8'))
+            r = random.randrange(0, 9) % 3
+            print(r)
+            if r == 0: my_response = {'action': 'enter'}
+            elif r == 1: my_response = {'action': 'exit'}
+            else: my_response = {'action': 'error'}
+            self.wfile.write(json.dumps(my_response).encode('utf-8'))
             return
 
         except:

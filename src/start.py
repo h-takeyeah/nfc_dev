@@ -54,7 +54,7 @@ def on_connect(tag):
 
     student_id = int(block_data[1:9].decode('utf-8'))
     print('\033[01;32m[*]\033[0m Student ID : {}'.format(student_id))
-    
+ 
     data = {'id': student_id}
     res = con.dispatch_touch_event(data)
     """

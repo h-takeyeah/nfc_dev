@@ -61,7 +61,7 @@ def dispatch_touch_event(obj):
     try:
         with urllib.request.urlopen(req) as res:
             try:
-                data = json.loads(res.read()) # res.read() : 'bytes', bytes => json.loads() => some object
+                data = json.loads(res.read().decode()) # 'bytes' => 'str' => some object
                 if isinstance(data, dict):
                     data['status'] = 'OK'
                     return data
