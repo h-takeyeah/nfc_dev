@@ -18,7 +18,8 @@ AUDIO_LIST = {
     'shippai': '../audio/shippai.wav',
     'enter': '../audio/correct_answer3.wav',
     'exit': '../audio/decision4.wav',
-    'warning': '../audio/warning1.wav'
+    'warning': '../audio/warning1.wav',
+    'not_registered': '../audio/kei_voice_091_2.wav'
 }
 
 def play_voice(action):
@@ -46,8 +47,6 @@ def play_voice(action):
         if random.randrange(100) % 3 == 0:
             selif.append('mattetayo')
 
-
-
     elif action == 'exit':
         selif = ['exit']
         if h >= 4 and h < 16:
@@ -57,8 +56,17 @@ def play_voice(action):
         else:
             selif.append('oyasumi')
 
-    else:
+    elif action == 'not_registered':
+        selif = ['warning','not_registered']
+
+    elif action == 'error':
         selif = ['warning','shippai']
+
+    elif action == 'warning':
+        selif = ['warning']
+    
+    else:
+        selif = ['warning']
 
     emit(selif)
     return

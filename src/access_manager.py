@@ -22,6 +22,7 @@ class AccessManager:
     def __init__(self):
         self.cnx = None
         self.member_list = set()
+        self.allow_guest = True
 
     def connect_to_db(self, config): # config : <class 'dict'>
         """
@@ -55,6 +56,21 @@ class AccessManager:
                 self.member_list.add(row[0])
 
         return True
+
+    def set_allow_guest(self, allow_guest):
+        """
+
+        Parameters
+        ----------
+            allow_guest : bool
+                登録されていない人を記録するかどうか
+
+        Returns
+        -------
+
+        """
+        self.allow_guest = allow_guest
+        return
 
     def run(self):
         """メインルーチン
@@ -122,8 +138,12 @@ class AccessManager:
         """
         if member_id not in self.member_list: # is member?
             print('\033[01;33m[!]\033[0m Your ID is not registered.\n')
-            su.play_voice('error')
-            return False
+            if self.allow_guest:
+                su.play_voice('not_registered')
+                pass
+            else:
+                su.play_voice('error')
+                return False
 
         with atclscur(self.cnx) as cur:
             cur.execute('SELECT member_id,entered_at FROM access_log WHERE member_id = {} AND exited_at IS NULL'.format(member_id))
