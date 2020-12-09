@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 
-load_dotenv(Path('..') / '.env')
+load_dotenv()
 ENDPOINT = os.getenv('AMS_ENDPOINT')
 
 def ping_test():
