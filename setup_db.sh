@@ -14,7 +14,5 @@ echo "OK"
 mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose -e "CREATE DATABASE IF NOT EXISTS accessdb"
 mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose -e "CREATE USER IF NOT EXISTS normal@'localhost' IDENTIFIED BY '${NORMALPASS}'"
 mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose -e "GRANT ALL ON accessdb.* TO normal@'localhost'"
-mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose < ./schema/create_table_member_list.sql
 mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose < ./schema/create_table_access_log.sql
-mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose -e "LOAD DATA LOCAL INFILE '${DATA_TO_INSERT}' IGNORE INTO TABLE accessdb.member_list CHARACTER SET utf8 FIELDS TERMINATED BY ',' IGNORE 1 LINES"
 echo "END"
