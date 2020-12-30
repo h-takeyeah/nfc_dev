@@ -1,19 +1,14 @@
-import os
-import sys
 import urllib.request
 import urllib.error
 import json
 from pathlib import Path
-from datetime import datetime
-from dotenv import load_dotenv
 
-load_dotenv()
-API_ENDPOINT = os.getenv('API_ENDPOINT')
-API_VERSION = os.getenv('API_VERSION')
+API_ENDPOINT = 'localhost:3000'
+API_VERSION = 'v1'
 
 def ping_test():
     """expressサーバーの死活チェック(起動時)"""
-    req = urllib.request.Request(url='http://{}/{}'.format(API_ENDPOINT, API_VERSION), method='GET')
+    req = urllib.request.Request(url='http://{}'.format(API_ENDPOINT, API_VERSION), method='GET')
     try:
         urllib.request.urlopen(req)
         pass
@@ -22,6 +17,7 @@ def ping_test():
         return str(ue)
     except Exception as e:
         print(str(e))
+        import sys
         return str(sys.exc_info()[0])
 
     return 'OK'
@@ -38,7 +34,7 @@ def dispatch_touch_event(obj):
     json_data = json.dumps(obj).encode('utf-8')
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
-    req = urllib.request.Request(url='http://{}/{}/access_log'.format(API_ENDPOINT, API_VERSION), headers=headers, data=json_data, method='POST')
+    req = urllib.request.Request(url='http://{}'.format(ENDPOINT), headers=headers, data=json_data, method='POST')
  
     try:
         with urllib.request.urlopen(req) as res:
