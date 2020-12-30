@@ -8,7 +8,7 @@ API_VERSION = 'v1'
 
 def ping_test():
     """expressサーバーの死活チェック(起動時)"""
-    req = urllib.request.Request(url='http://{}'.format(API_ENDPOINT, API_VERSION), method='GET')
+    req = urllib.request.Request(url='http://{}'.format(API_ENDPOINT), method='GET')
     try:
         urllib.request.urlopen(req)
         pass
