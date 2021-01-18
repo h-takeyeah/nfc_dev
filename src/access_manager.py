@@ -125,7 +125,7 @@ class AccessManager:
 
         return True
 
-    def insert_record(self, member_id):
+    def insert_record(self, student_id):
         """データベースにINSERT文かUPDATE文を発行して入退室記録をつける
            access_logにクエリを出す
            学籍番号にまつわるレコードのうち入室時間は記録されていて退室時間がNULLであるものを取ってくる
@@ -134,7 +134,7 @@ class AccessManager:
 
         Parameters
         ----------
-            member_id : int
+            student_id : int
 
         Returns
         -------
@@ -142,7 +142,7 @@ class AccessManager:
                 INSERT(またはUPDATE)が成功したらTrue,それ以外ならFalse
 
         """
-        #if member_id not in self.member_list: # is member?
+        #if student_id not in self.member_list: # is member?
         #    print('\033[01;33m[!]\033[0m Your ID is not registered.\n')
         #    if self.allow_guest:
         #        su.play_voice('not_registered')
@@ -152,14 +152,14 @@ class AccessManager:
         #        return False
 
         with atclscur(self.cnx) as cur:
-            cur.execute('SELECT member_id,entered_at FROM access_log WHERE member_id = {} AND exited_at IS NULL'.format(member_id))
+            cur.execute('SELECT student_id,entered_at FROM access_log WHERE student_id = {} AND exited_at IS NULL'.format(student_id))
             res = cur.fetchone()
 
         action = 'enter'
-        query = 'INSERT INTO access_log (member_id) VALUES ({})'.format(member_id) # enter
+        query = 'INSERT INTO access_log (student_id) VALUES ({})'.format(student_id) # enter
         if res != None:
             action = 'exit'
-            query = 'UPDATE access_log SET exited_at=NOW() WHERE member_id = {} AND entered_at = \'{}\''.format(res[0], res[1]) # exit
+            query = 'UPDATE access_log SET exited_at=NOW() WHERE student_id = {} AND entered_at = \'{}\''.format(res[0], res[1]) # exit
 
         with atclscur(self.cnx) as cur:
             try:
@@ -175,7 +175,8 @@ class AccessManager:
 
             su.play_voice(action) # Greeting
 
-            props = {'id': member_id, 'action': action}
-            dispatcherutils.dispatch_touch_event(props) # Dispatch information on enttry/exited to View app
+            """localhostに投げるやつ。配布用としては不要"""
+            #props = {'id': student_id, 'action': action}
+            #dispatcherutils.dispatch_touch_event(props) # Dispatch information on enttry/exited to View app
             return True
 
