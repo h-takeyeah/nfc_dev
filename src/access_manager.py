@@ -48,7 +48,7 @@ class AccessManager:
             print('[!] SQLSTATE value: {}'.format(e.sqlstate))
             print('[!] Error messsage: {}'.format(e.msg))
             return False
-        
+
         #with atclscur(self.cnx) as cur:
         #    cur.execute('SELECT id FROM member_list')
         #    response = cur.fetchall()
@@ -119,6 +119,10 @@ class AccessManager:
             else:
                 print('\033[01;33m[!]\033[0m {}\n'.format(e))
                 return False
+
+        except:
+            su.play_voice('warning')
+            return False
 
         if not self.insert_record(int(block_data[1:9].decode('utf-8'))): # Insert failue
             return False
