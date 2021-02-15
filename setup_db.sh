@@ -15,4 +15,5 @@ mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose -e "CREATE DATABASE
 mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose -e "CREATE USER IF NOT EXISTS normal@'localhost' IDENTIFIED BY '${NORMALPASS}'"
 mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose -e "GRANT ALL ON accessdb.* TO normal@'localhost'"
 mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose < ./schema/create_table_access_log.sql
+mysql -h${HOSTNAME} -P${PORT} -uroot -p${ROOTPASS} --verbose < ./schema/create_event_reset.sql
 echo "END"
