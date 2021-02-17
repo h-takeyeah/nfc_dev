@@ -1,6 +1,7 @@
 import urllib.request
 import urllib.error
 import json
+import sys
 from datetime import datetime
 
 HOST = 'localhost'
@@ -30,9 +31,9 @@ def dispatch_touch_event(obj):
  
     try: urllib.request.urlopen(req)
     except urllib.error.URLError as e:
-        print('\033[;33m[*] == Info from DISPATCH_UTIL ==')
-        print('[*] \033[01;31m{}\033[;33m'.format(e))
-        print('[*] Sending a message to Viewer failed. (not serious)\033[0m\n')
+        print('\033[;33m[*] == Info from DISPATCH_UTIL ==', file=sys.stderr)
+        print('[*] \033[01;31m{}\033[;33m'.format(e), file=sys.stderr)
+        print('[*] Sending a message to Viewer failed. (not serious)\033[0m\n', file=sys.stderr)
         pass
 
     return

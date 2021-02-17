@@ -1,4 +1,5 @@
 import nfc
+import sys
 import mysql.connector as mc
 from auto_close_cursor import AutoCloseCursor as atclscur
 import soundutils as su
@@ -44,9 +45,9 @@ class AccessManager:
             self.cnx = mc.connect(**config, buffered=True) # buffered : To avoid 'Unread result found' error.
 
         except mc.Error as e:
-            print('[!] Error code: {}'.format(e.errno))
-            print('[!] SQLSTATE value: {}'.format(e.sqlstate))
-            print('[!] Error messsage: {}'.format(e.msg))
+            print('[!] Error code: {}'.format(e.errno), file=sys.stderr)
+            print('[!] SQLSTATE value: {}'.format(e.sqlstate), file=sys.stderr)
+            print('[!] Error messsage: {}'.format(e.msg), file=sys.stderr)
             return False
 
         #with atclscur(self.cnx) as cur:
@@ -82,9 +83,9 @@ class AccessManager:
                 while clf.connect(rdwr={'on-connect': self.on_connect}):
                     pass
         except OSError as ose:
-            print('\033[01;31m[!] {}\033[0m'.format(ose))
+            print('\033[01;31m[!] {}\033[0m'.format(ose), file=sys.stderr)
             su.play_voice('error')
-            print('\033[01;31m[!] Stop\033[0m')
+            print('\033[01;31m[!] Stop\033[0m', file=sys.stderr)
             exit(-1)
 
     def on_connect(self, tag):
@@ -111,13 +112,13 @@ class AccessManager:
         except nfc.tag.TagCommandError as e:
             su.play_voice('warning')
             if e.errno == 0x1A6: # 0x01A6 => "invalid service code number or attribute"
-                print('\033[01;33m[!]\033[0m Your IC card seems to be unavailable. Is it valid one?\n')
+                print('\033[01;33m[!]\033[0m Your IC card seems to be unavailable. Is it valid one?\n', file=sys.stderr)
                 return False
             elif e.errno == 0x0: # nfc.tag.TIMEOUT_ERROR => "unrecoverable timeout error"
-                print('\033[01;33m[!]\033[0m Too short. Please touch your card again\n') # Text color red
+                print('\033[01;33m[!]\033[0m Too short. Please touch your card again\n', file=sys.stderr) # Text color red
                 return False
             else:
-                print('\033[01;33m[!]\033[0m {}\n'.format(e))
+                print('\033[01;33m[!]\033[0m {}\n'.format(e), file=sys.stderr)
                 return False
 
         except:
@@ -171,10 +172,10 @@ class AccessManager:
                 self.cnx.commit()
 
             except mc.Error as e:
-                print('[!] Error code: {}'.format(e.errno))
-                print('[!] SQLSTATE value: {}'.format(e.sqlstate))
-                print('[!] Error messsage: {}'.format(e.msg))
-                print('\033[01;31m[!] Return due to SQL error.\033[0m')
+                print('[!] Error code: {}'.format(e.errno), file=sys.stderr)
+                print('[!] SQLSTATE value: {}'.format(e.sqlstate), file=sys.stderr)
+                print('[!] Error messsage: {}'.format(e.msg), file=sys.stderr)
+                print('\033[01;31m[!] Return due to SQL error.\033[0m', file=sys.stderr)
                 return False
 
             su.play_voice(action) # Greeting

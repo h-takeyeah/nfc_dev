@@ -1,3 +1,4 @@
+import sys
 import random
 import simpleaudio as sa
 from datetime import datetime as dt
@@ -90,8 +91,8 @@ def emit(words):
             play_obj.wait_done()
     
         except FileNotFoundError as e:
-            print('\033[;33m[!] == Info from SOUND_UTIL ==')
-            print('[!]  \033[01;31m{}\033[0m\n'.format(e))
+            print('\033[;33m[!] == Info from SOUND_UTIL ==', file=sys.stderr)
+            print('[!]  \033[01;31m{}\033[0m\n'.format(e), file=sys.stderr)
             """or did you encountered some sound trouble? HINT 'sudo raspi-config'"""
             return False
 
