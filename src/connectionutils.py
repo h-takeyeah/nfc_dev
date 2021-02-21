@@ -1,5 +1,4 @@
 import json
-import sys
 import urllib.error as ue
 import urllib.request as ur
 from http import HTTPStatus
@@ -7,28 +6,29 @@ from http import HTTPStatus
 API_ENDPOINT = 'http://localhost:8000/room'
 
 
-def open_url(req):
+def do_request(req):
     try:
         with ur.urlopen(req) as res:
             return res.status
-    except ue.HTTPError as e:
+    except ue.HTTPError as e:  # 4xx, 5xx
         return e.code
-    except ue.URLError as e:
-        print('URLError:', e.reason, file=sys.stderr)
-        return -1
     except Exception:
-        print('Unexpected error:', sys.exc_info()[0], file=sys.stderr)
-        return -1
+        raise
 
 
 def ping_test():
     req = ur.Request(url=API_ENDPOINT)
-    return (open_url(req) == HTTPStatus.OK)
+    try:
+        if (do_request(req) == HTTPStatus.OK):
+            return
+    except Exception as e:
+        print(e)
+        return False
 
 
 def is_inroom(parsed_id):
     req = ur.Request(url='{}/{}'.format(API_ENDPOINT, parsed_id))
-    return (open_url(req) == HTTPStatus.OK)
+    return (do_request(req) == HTTPStatus.OK)
 
 
 def enter_room(parsed_id):
@@ -40,10 +40,10 @@ def enter_room(parsed_id):
     req = ur.Request(
         url=API_ENDPOINT, data=data,
         headers=headers, method='POST')
-    return (open_url(req) == HTTPStatus.CREATED)
+    return (do_request(req) == HTTPStatus.CREATED)
 
 
 def leave_room(parsed_id):
     req = ur.Request(
         url='{}/{}'.format(API_ENDPOINT, parsed_id), method='DELETE')
-    return (open_url(req) == HTTPStatus.NO_CONTENT)
+    return (do_request(req) == HTTPStatus.NO_CONTENT)
