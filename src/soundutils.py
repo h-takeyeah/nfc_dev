@@ -21,6 +21,7 @@ AUDIO_LIST = {
     'warning': '../audio/warning1.wav'
 }
 
+
 def play_voice(action):
     """音声ファイル(.wav)を再生する。セリフ用
 
@@ -32,7 +33,7 @@ def play_voice(action):
 
     """
     selif = None
-    h = dt.now().hour # 0 <= hour < 24
+    h = dt.now().hour  # 0 <= hour < 24
     if action == 'enter':
         selif = ['enter']
         if h >= 4 and h < 9:
@@ -41,12 +42,10 @@ def play_voice(action):
             selif.append('konnichiha')
         else:
             selif.append('konbanha')
-        
+
         # omake
         if random.randrange(100) % 3 == 0:
             selif.append('mattetayo')
-
-
 
     elif action == 'exit':
         selif = ['exit']
@@ -61,10 +60,11 @@ def play_voice(action):
         selif = ['warning']
 
     else:
-        selif = ['warning','shippai']
+        selif = ['warning', 'shippai']
 
     emit(selif)
     return
+
 
 def emit(words):
     """セリフを発話させる
@@ -83,11 +83,12 @@ def emit(words):
             wave_obj = sa.WaveObject.from_wave_file(AUDIO_LIST[key])
             play_obj = wave_obj.play()
             play_obj.wait_done()
-    
+
         except FileNotFoundError as e:
             print('\033[;33m[!]\033[0m {}\n'.format(e))
-            """Or did you encounter some sound trouble? HINT 'sudo raspi-config'"""
+            """Or did you encounter some sound trouble?
+            HINT 'sudo raspi-config'
+            """
             return False
 
-    return True # After finishing for operation
-
+    return True
